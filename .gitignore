@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+
+# VS Code - Configuración local del desarrollador
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Archivos de Datos, Registros de Ingesta y Logs Locales
+logs/*.txt
+*.log
+*.xlsx
+*.xls
+*.csv
+
+# Base de Datos local y credenciales
+*.mdf
+*.ldf
+.env
+
+# Builds y Ejecutables empaquetados (.exe)
+build/
+dist/
+*.spec
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
