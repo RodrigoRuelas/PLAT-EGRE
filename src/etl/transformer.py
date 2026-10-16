@@ -9,11 +9,9 @@ class ValidadorTransformador:
     def normalizar_textos(self, datos: pd.DataFrame) -> pd.DataFrame:
         df = datos.copy()
         
-        # Mapeo y limpieza de texto estándar
         for col in df.select_dtypes(include=['object']).columns:
             df[col] = df[col].astype(str).str.strip()
 
-        # Si el DataFrame contiene columnas de ingreso, aplica extracción numérica
         for col in df.columns:
             if "ingreso" in str(col).lower() or "monto" in str(col).lower():
                 df[col] = df[col].apply(self._extraer_monto)
@@ -21,14 +19,21 @@ class ValidadorTransformador:
         return df
 
     def convertir_vacios_null(self, datos: pd.DataFrame) -> pd.DataFrame:
-        df = datos.replace(
-            to_replace=r'^(?i)(nan|none|null|n/a|\s*)$', 
-            value=np.nan, 
-            regex=True
-        )
-        return df.where(pd.notnull(df), None)
+        """Sustituye cadenas vacías, 'nan', 'none' o 'null' por None (SQL NULL)."""
+        df = datos.copy()
+        
+        # Regex corregida compatible con Python 3.11+
+        patron_vacios = r'^(nan|none|null|n/a|\s*)$'
+        
+        # Se aplica reemplazo sin banderas embebidas problemáticas
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                df[col] = df[col].astype(str).apply(
+                    lambda x: None if re.match(patron_vacios, x.strip(), re.IGNORECASE) else x
+                )
 
-    # Método auxiliar privado (no afecta la firma UML pública)
+        return df
+
     def _extraer_monto(self, valor) -> float:
         if pd.isna(valor) or str(valor).strip() in ["", "None", "nan"]:
             return None
