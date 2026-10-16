@@ -1,6 +1,6 @@
 -- ============================================================================
 -- PROYECTO: PLAT-EGRE (Observatorio de Empleabilidad)
--- DDL FIEL AL DIAGRAMA ENTIDAD-RELACIÓN
+-- DDL FIEL AL DIAGRAMA ENTIDAD-RELACIï¿½N
 -- GESTOR: Microsoft SQL Server 2019+
 -- ============================================================================
 
@@ -78,10 +78,8 @@ CREATE TABLE Egresado (
 -- ----------------------------------------------------------------------------
 CREATE TABLE Empresa (
     id_empresa INT IDENTITY(1,1) PRIMARY KEY,
-    ruc VARCHAR(11) NULL CONSTRAINT UQ_Empresa_ruc UNIQUE,
     razon_social VARCHAR(150) NOT NULL,
     sector_economico VARCHAR(50),
-    tamano_empresa VARCHAR(50)
 );
 
 -- ----------------------------------------------------------------------------
@@ -115,7 +113,7 @@ CREATE TABLE Historico_Egresado (
 GO
 
 -- ============================================================================
--- VISTAS ANALÍTICAS PARA LOS KPIS DEL DASHBOARD
+-- VISTAS ANALï¿½TICAS PARA LOS KPIS DEL DASHBOARD
 -- ============================================================================
 
 -- VISTA 1: KPI DE EMPLEABILIDAD
@@ -159,7 +157,7 @@ GROUP BY c.nombre_carrera, c.facultad, ps.nombre_periodo, h.condicion_trabajo, h
 GO
 
 -- ----------------------------------------------------------------------------
--- REGISTROS INICIALES DE CONFIGURACIÓN
+-- REGISTROS INICIALES DE CONFIGURACIï¿½N
 -- ----------------------------------------------------------------------------
 INSERT INTO Rol (nombre_rol) VALUES ('Administrador'), ('Usuario');
 
