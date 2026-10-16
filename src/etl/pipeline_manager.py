@@ -25,6 +25,14 @@ class ETLPipelineManager:
             tipo_tabla = self.extractor.identificar_tipo_archivo(ruta)
             self.auditor.registrar_evento(f"Tipo de archivo identificado: {tipo_tabla}")
 
+            # 2. Transformación y Limpieza
+            df_norm = self.transformador.normalizar_textos(df_raw)
+            df_clean = self.transformador.convertir_vacios_null(df_norm)
+
+            # 3. Carga en Base de Datos
+            self.cargador.conectar_bd()
+            self.cargador.ejecutar_upsert(df_clean, tipo_tabla)
+
             self.estado_ejecucion = "EXITOSO"
             self.auditor.registrar_evento(f"Carga finalizada con éxito en {tipo_tabla}.")
             return True
