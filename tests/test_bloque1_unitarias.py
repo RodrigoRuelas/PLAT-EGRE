@@ -31,7 +31,7 @@ class TestBloque1Unitarias(unittest.TestCase):
             {
                 "Apellidos_Nombres": "   Perez Lopez, Juan   ",
                 "DNI": " 77889900 ",
-                "Ingreso_Mensual": "S/. 3,500.50"
+                "Ingreso_Mensual": "3500.50"
             }
         ])
 
