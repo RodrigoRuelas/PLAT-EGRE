@@ -1,6 +1,7 @@
 import hashlib
 from config.database import DatabaseConfig
 
+
 class AuthService:
     """
     Servicio encargado de la gestión de usuarios, autenticación
@@ -27,7 +28,7 @@ class AuthService:
 
     def autenticar(self, usr: str, pwd: str) -> bool:
         """
-        Valida las credenciales ingresadas contra la tabla Usuario de SQL Server.
+        Valida las credenciales ingresadas contra las tablas Usuario y Rol de SQL Server.
         """
         if not self.conectar_db():
             return False
@@ -37,10 +38,12 @@ class AuthService:
             cursor = conn.cursor()
             pwd_hashed = self._hash_password(pwd)
 
+            # Consulta corregida: INNER JOIN con tabla Rol y evaluación de estado BIT (1)
             cursor.execute("""
-                SELECT id_usuario, rol 
-                FROM Usuario 
-                WHERE username = ? AND password_hash = ? AND estado = 'ACTIVO'
+                SELECT u.id_usuario, r.nombre_rol 
+                FROM Usuario u
+                INNER JOIN Rol r ON u.id_rol = r.id_rol
+                WHERE u.username = ? AND u.password_hash = ? AND u.estado = 1
             """, (usr.strip(), pwd_hashed))
             
             row = cursor.fetchone()
@@ -49,7 +52,7 @@ class AuthService:
 
             if row:
                 self.sesion_activa = True
-                self._usuario_actual = usr
+                self._usuario_actual = usr.strip()
                 self._rol_actual = row[1]
                 return True
             else:
@@ -65,22 +68,36 @@ class AuthService:
         """Verifica si el rol de la sesión activa tiene permisos concedidos."""
         if not self.sesion_activa:
             return False
-        return self._rol_actual.upper() == rol.upper()
+        return self._rol_actual.upper() == rol.strip().upper()
 
     def registrar_usuario(self, datos: dict) -> bool:
-        """Registra un nuevo usuario en la base de datos SQL Server."""
+        """
+        Registra un nuevo usuario en la base de datos SQL Server resolviendo
+        su llave foránea id_rol y almacenando su contraseña encriptada en SHA-256.
+        """
         try:
             conn = DatabaseConfig.get_pyodbc_connection()
             cursor = conn.cursor()
             pwd_hashed = self._hash_password(datos.get("password", ""))
 
+            # Resolver id_rol dinámicamente si se envía 'rol' como texto o usar 'id_rol' directo
+            id_rol = datos.get("id_rol")
+            if not id_rol:
+                nombre_rol = datos.get("rol", "Administrador").strip()
+                cursor.execute("SELECT id_rol FROM Rol WHERE LOWER(nombre_rol) = LOWER(?)", (nombre_rol,))
+                rol_row = cursor.fetchone()
+                id_rol = rol_row[0] if rol_row else 1
+
             cursor.execute("""
-                INSERT INTO Usuario (username, password_hash, rol, email, estado)
-                VALUES (?, ?, ?, ?, 'ACTIVO')
+                INSERT INTO Usuario (
+                    id_rol, username, password_hash, nombre_completo, email, estado, fecha_creacion
+                )
+                VALUES (?, ?, ?, ?, ?, 1, GETDATE())
             """, (
+                id_rol,
                 datos.get("username", "").strip(),
                 pwd_hashed,
-                datos.get("rol", "Usuario"),
+                datos.get("nombre_completo", "Usuario Sistema").strip(),
                 datos.get("email", "").strip()
             ))
 
