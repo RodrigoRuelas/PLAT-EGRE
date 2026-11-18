@@ -35,7 +35,7 @@ class TestBloque2Integracion(unittest.TestCase):
         except Exception:
             cls.conn = None
 
-    def test_TC001_ingesta_y_persistencia_egresados(self):
+    def test_TC01_ingesta_y_persistencia_egresados(self):
         """
         TC-001: Ingesta masiva y persistencia relacional en la tabla Egresado.
         Requerimiento: RF-0002, RNF-0002
@@ -53,7 +53,7 @@ class TestBloque2Integracion(unittest.TestCase):
         ])
 
         print("\n" + "-" * 70)
-        print(" 📌 CASO: TC-001 | Ingesta Masiva y Persistencia en SQL Server")
+        print(" 📌 CASO: TC-01 | Ingesta Masiva y Persistencia en SQL Server")
         print(f"   • Entrada  : DataFrame sintético con {len(df_egresados)} registros")
         print(f"   • Config   : DatabaseConfig instanciado correctamente")
 
@@ -75,7 +75,7 @@ class TestBloque2Integracion(unittest.TestCase):
         self.assertEqual(tei, 100.0)
         print("   ✅ ESTADO  : PASS (Persistencia relacional comprobada)")
 
-    def test_TC002_resolucion_fk_historico(self):
+    def test_TC02_resolucion_fk_historico(self):
         """
         TC-002: Inserción en Histórico de Seguimiento asociando llaves foráneas.
         Requerimiento: RF-0002, RNF-0002
@@ -91,7 +91,7 @@ class TestBloque2Integracion(unittest.TestCase):
         }])
 
         print("\n" + "-" * 70)
-        print(" 📌 CASO: TC-002 | Resolución de FK en Histórico de Seguimiento")
+        print(" 📌 CASO: TC-02 | Resolución de FK en Histórico de Seguimiento")
         print("   • Entrada  : Registro laboral para DNI='70000001'")
 
         insertados = 0
@@ -109,7 +109,7 @@ class TestBloque2Integracion(unittest.TestCase):
         self.assertGreaterEqual(insertados, 1)
         print("   ✅ ESTADO  : PASS (Integridad referencial e inserción continua)")
 
-    def test_TC003_actualizacion_upsert(self):
+    def test_TC03_actualizacion_upsert(self):
         """
         TC-003: Detección de registros duplicados y actualización (UPSERT).
         Requerimiento: RF-0002, HU-01
@@ -125,7 +125,7 @@ class TestBloque2Integracion(unittest.TestCase):
         }])
 
         print("\n" + "-" * 70)
-        print(" 📌 CASO: TC-003 | Actualización de Registros Duplicados (UPSERT)")
+        print(" 📌 CASO: TC-03 | Actualización de Registros Duplicados (UPSERT)")
         print("   • Entrada  : DNI='70000001' con correo actualizado")
 
         afectados = 1
@@ -141,13 +141,13 @@ class TestBloque2Integracion(unittest.TestCase):
         self.assertGreaterEqual(afectados, 1)
         print("   ✅ ESTADO  : PASS (UPSERT realizado correctamente)")
 
-    def test_TC004_registro_de_auditoria(self):
+    def test_TC04_registro_de_auditoria(self):
         """
         TC-004: Generación de logs y persistencia de trazas de auditoría.
         Requerimiento: RF-0003, HU-01
         """
         print("\n" + "-" * 70)
-        print(" 📌 CASO: TC-004 | Registro Automático de Auditoría")
+        print(" 📌 CASO: TC-04 | Registro Automático de Auditoría")
         print("   • Entrada  : Traza de evento 'TEST_INTEGRACION'")
 
         id_log = None
