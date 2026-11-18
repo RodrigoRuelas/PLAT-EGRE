@@ -69,7 +69,9 @@ class TestBloque4Operaciones(unittest.TestCase):
         inicio = time.time()
         total = df_egresados["cantidad_egresados"].sum()
         empleados = df_egresados[
-            df_egresados["condicion_trabajo"].str.lower().str.contains("empleado|dependiente|independiente", na=False)
+            df_egresados["condicion_trabajo"].str.lower().str.contains(
+                r"\b(?:empleado|dependiente|independiente)\b", regex=True, na=False
+            )
         ]["cantidad_egresados"].sum()
         tasa_empleo = round((empleados / total) * 100, 2) if total > 0 else 0.0
         self.analytics_service.kpi_empleabilidad = tasa_empleo

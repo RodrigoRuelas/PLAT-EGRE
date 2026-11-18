@@ -42,7 +42,9 @@ class DashboardAnalyticsService:
                 return 0.0
 
             total = df["cantidad_egresados"].sum()
-            empleados = df[df["condicion_trabajo"].str.lower().str.contains("empleado|dependiente|independiente", na=False)]["cantidad_egresados"].sum()
+            empleados = df[
+                df["condicion_trabajo"].str.lower().str.contains(r"\b(?:empleado|dependiente|independiente)\b", regex=True, na=False)
+            ]["cantidad_egresados"].sum()
 
             self.kpi_empleabilidad = round((empleados / total) * 100, 2) if total > 0 else 0.0
             return self.kpi_empleabilidad
