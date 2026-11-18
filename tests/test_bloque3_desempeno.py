@@ -39,7 +39,7 @@ class TestBloque3Desempeno(unittest.TestCase):
             } for i in range(1, cantidad + 1)
         ])
 
-    def test_PD01_procesamiento_100_registros(self):
+    def test_PNF01_1_procesamiento_100_registros(self):
         """
         PD-01: Carga y transformación masiva de 100 registros sintéticos.
         Requerimiento: RNF-0002, RF-0002
@@ -48,7 +48,7 @@ class TestBloque3Desempeno(unittest.TestCase):
         df_100 = self._generar_dataset_sintetico(100)
 
         print("\n" + "-" * 70)
-        print(" 📌 CASO: PD-01 | Procesamiento Masivo de 100 Registros")
+        print(" 📌 CASO: PNF-01.1 | Procesamiento Masivo de 100 Registros")
         print(f"   • Volumetría : {len(df_100)} registros sintéticos en memoria")
 
         inicio = time.time()
@@ -67,7 +67,7 @@ class TestBloque3Desempeno(unittest.TestCase):
         self.assertLessEqual(tiempo_ejecucion, 2.00)
         print("   ✅ ESTADO  : PASS (Desempeño óptimo bajo carga de 100 registros)")
 
-    def test_PD02_procesamiento_500_registros(self):
+    def test_PNF01_2_procesamiento_500_registros(self):
         """
         PD-02: Carga y transformación masiva de 500 registros sintéticos.
         Requerimiento: RNF-0002, RF-0002
@@ -76,7 +76,7 @@ class TestBloque3Desempeno(unittest.TestCase):
         df_500 = self._generar_dataset_sintetico(500)
 
         print("\n" + "-" * 70)
-        print(" 📌 CASO: PD-02 | Procesamiento Masivo de 500 Registros")
+        print(" 📌 CASO: PNF-01.2 | Procesamiento Masivo de 500 Registros")
         print(f"   • Volumetría : {len(df_500)} registros sintéticos en memoria")
 
         inicio = time.time()
@@ -93,7 +93,7 @@ class TestBloque3Desempeno(unittest.TestCase):
         self.assertLessEqual(tiempo_ejecucion, 5.00)
         print("   ✅ ESTADO  : PASS (Desempeño estable bajo carga de 500 registros)")
 
-    def test_PD03_procesamiento_1000_registros(self):
+    def test_PNF01_3_procesamiento_1000_registros(self):
         """
         PD-03: Prueba de Estrés y Escalabilidad con 1,000 registros sintéticos.
         Requerimiento: RNF-0002, RF-0002
@@ -102,7 +102,7 @@ class TestBloque3Desempeno(unittest.TestCase):
         df_1000 = self._generar_dataset_sintetico(1000)
 
         print("\n" + "-" * 70)
-        print(" 📌 CASO: PD-03 | Prueba de Estrés con 1,000 Registros")
+        print(" 📌 CASO: PNF-01.3 | Prueba de Estrés con 1,000 Registros")
         print(f"   • Volumetría : {len(df_1000)} registros sintéticos en memoria")
 
         inicio = time.time()
