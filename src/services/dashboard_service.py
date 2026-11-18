@@ -1,20 +1,24 @@
 import pandas as pd
+from sqlalchemy import text
 from config.database import DatabaseConfig
+
 
 class DashboardAnalyticsService:
     """
     Servicio encargado de ejecutar consultas parametrizadas sobre las vistas analíticas
-    en SQL Server y calcular los indicadores clave (KPIs) de empleabilidad.
+    en SQL Server mediante SQLAlchemy y calcular los indicadores clave (KPIs) de empleabilidad.
     """
+
     def __init__(self):
         self.kpi_empleabilidad: float = 0.0
         self.kpi_ingreso_promedio: float = 0.0
+        self.engine = DatabaseConfig.get_sqlalchemy_engine()
 
     def conectar_db(self) -> bool:
-        """Verifica la conectividad con la base de datos SQL Server."""
+        """Verifica la conectividad con la base de datos SQL Server usando SQLAlchemy."""
         try:
-            conn = DatabaseConfig.get_pyodbc_connection()
-            conn.close()
+            with self.engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
             return True
         except Exception as e:
             print(f"[DashboardAnalyticsService] Error de conexión DB: {e}")
@@ -26,16 +30,15 @@ class DashboardAnalyticsService:
             return 0.0
 
         try:
-            conn = DatabaseConfig.get_pyodbc_connection()
             query = "SELECT condicion_trabajo, cantidad_egresados FROM vw_KPI_Empleabilidad WHERE 1=1"
-            params = []
+            params = {}
 
             if filtros.get("carrera") and filtros["carrera"] != "Todas":
-                query += " AND nombre_carrera = ?"
-                params.append(filtros["carrera"])
+                query += " AND nombre_carrera = :carrera"
+                params["carrera"] = filtros["carrera"]
 
-            df = pd.read_sql(query, conn, params=params)
-            conn.close()
+            with self.engine.connect() as conn:
+                df = pd.read_sql(text(query), conn, params=params)
 
             if df.empty:
                 self.kpi_empleabilidad = 0.0
@@ -58,16 +61,15 @@ class DashboardAnalyticsService:
             return 0.0
 
         try:
-            conn = DatabaseConfig.get_pyodbc_connection()
             query = "SELECT ingreso_promedio, egresados_con_ingreso FROM vw_KPI_IngresoPromedio WHERE 1=1"
-            params = []
+            params = {}
 
             if filtros.get("carrera") and filtros["carrera"] != "Todas":
-                query += " AND nombre_carrera = ?"
-                params.append(filtros["carrera"])
+                query += " AND nombre_carrera = :carrera"
+                params["carrera"] = filtros["carrera"]
 
-            df = pd.read_sql(query, conn, params=params)
-            conn.close()
+            with self.engine.connect() as conn:
+                df = pd.read_sql(text(query), conn, params=params)
 
             if df.empty:
                 self.kpi_ingreso_promedio = 0.0
@@ -86,18 +88,15 @@ class DashboardAnalyticsService:
             return []
 
         try:
-            conn = DatabaseConfig.get_pyodbc_connection()
-            cursor = conn.cursor()
-            cursor.execute("""
+            query = text("""
                 SELECT TOP 100 e.nom_egresado, c.nombre_carrera, h.condicion_trabajo, h.area_cargo, h.ingreso_mensual
                 FROM Egresado e
                 INNER JOIN Carrera c ON e.id_carrera = c.id_carrera
                 LEFT JOIN Historico_Egresado h ON e.id_egresado = h.id_egresado
             """)
-            rows = cursor.fetchall()
-            cursor.close()
-            conn.close()
-            return [list(row) for row in rows]
+            with self.engine.connect() as conn:
+                result = conn.execute(query)
+                return [list(row) for row in result.fetchall()]
         except Exception as e:
             print(f"[DashboardAnalyticsService] Error al filtrar datos: {e}")
             return []
@@ -108,17 +107,14 @@ class DashboardAnalyticsService:
             return []
 
         try:
-            conn = DatabaseConfig.get_pyodbc_connection()
-            cursor = conn.cursor()
-            cursor.execute("""
+            query = text("""
                 SELECT h.id_historico, e.nom_egresado, h.ciudad_residencia, h.condicion_trabajo, h.ingreso_mensual, h.fecha_encuesta
                 FROM Historico_Egresado h
                 INNER JOIN Egresado e ON h.id_egresado = e.id_egresado
             """)
-            rows = cursor.fetchall()
-            cursor.close()
-            conn.close()
-            return [list(row) for row in rows]
+            with self.engine.connect() as conn:
+                result = conn.execute(query)
+                return [list(row) for row in result.fetchall()]
         except Exception as e:
             print(f"[DashboardAnalyticsService] Error al obtener histórico: {e}")
             return []
