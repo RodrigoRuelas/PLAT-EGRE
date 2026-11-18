@@ -118,3 +118,32 @@ class DashboardAnalyticsService:
         except Exception as e:
             print(f"[DashboardAnalyticsService] Error al obtener histórico: {e}")
             return []
+    
+    def obtener_distribucion_condicion(self, filtros: dict) -> dict:
+        """Retorna un diccionario {condicion_trabajo: cantidad} para el gráfico de sectores."""
+        if not self.conectar_db():
+            return {}
+
+        try:
+            query = """
+                SELECT condicion_trabajo, SUM(cantidad_egresados) AS total
+                FROM vw_KPI_Empleabilidad
+                WHERE 1=1
+            """
+            params = {}
+            if filtros.get("carrera") and filtros["carrera"] != "Todas":
+                query += " AND nombre_carrera = :carrera"
+                params["carrera"] = filtros["carrera"]
+
+            query += " GROUP BY condicion_trabajo"
+
+            with self.engine.connect() as conn:
+                df = pd.read_sql(text(query), conn, params=params)
+
+            if df.empty:
+                return {}
+
+            return dict(zip(df["condicion_trabajo"], df["total"]))
+        except Exception as e:
+            print(f"[DashboardAnalyticsService] Error al obtener distribución: {e}")
+            return {}

@@ -21,15 +21,21 @@ class ExtractorExcel:
             raise ValueError("El archivo cargado está vacío o no contiene una estructura válida.")
         return True
 
-    def identificar_tipo_archivo(self, ruta: str) -> str:
-        df_preview = pd.read_csv(ruta, nrows=2) if ruta.endswith('.csv') else pd.read_excel(ruta, nrows=2)
-        cols_text = " ".join([str(c).lower() for c in df_preview.columns])
-
-        if "dni" in cols_text or "carnet" in cols_text or "qué año egreso" in cols_text:
-            self.tipo_archivo = "Egresados"
-        elif "condición se encuentra" in cols_text or "ingreso laboral" in cols_text or "3.1 si su respuesta" in cols_text:
-            self.tipo_archivo = "Historico"
+    def identificar_tipo_archivo(self, origen) -> str:
+        # Si recibe la ruta en texto (str), lee las columnas del Excel; si ya es DataFrame, lo usa directo
+        if isinstance(origen, str):
+            df = pd.read_excel(origen, nrows=1)
         else:
-            raise ValueError("No se pudo identificar un formato válido (Registro o Histórico).")
+            df = origen
 
-        return self.tipo_archivo
+        cols_lower = [str(c).strip().lower() for c in df.columns]
+
+        # 1. Evaluar PRIMERO las columnas exclusivas de Histórico Laboral
+        if any("condición" in c or "condicion" in c or "ingreso" in c for c in cols_lower):
+            return "Historico"
+
+        # 2. Evaluar DESPUÉS el padrón maestro de Egresados
+        if any("dni" in c or "año egres" in c or "anio_egreso" in c for c in cols_lower):
+            return "Egresados"
+
+        raise ValueError("Estructura de columnas no reconocida para Egresados ni Histórico.")

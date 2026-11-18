@@ -3,14 +3,17 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from src.services.dashboard_service import DashboardAnalyticsService
 
+
 class DashboardView(ctk.CTkFrame):
     """
-    Vista del Dashboard Analítico con paneles de KPIs y gráficos incrustados mediante Matplotlib.
+    Vista del Dashboard Analítico con paneles de KPIs y gráficos dinámicos mediante Matplotlib.
     """
     def __init__(self, parent):
         super().__init__(parent)
 
         self.service = DashboardAnalyticsService()
+        self.canvas_grafico = None
+        self.fig_actual = None
 
         # Atributos de Filtro
         self.filtro_egresado: str = ""
@@ -31,16 +34,20 @@ class DashboardView(ctk.CTkFrame):
         self.lbl_carrera.pack(side="left", padx=10, pady=10)
 
         self.cmb_carrera = ctk.CTkOptionMenu(
-            self.frame_filtros, 
+            self.frame_filtros,
             values=["Todas", "Ingeniería de Software", "Administración", "Derecho"],
             command=lambda val: self.aplicar_filtros_busqueda()
         )
         self.cmb_carrera.pack(side="left", padx=5, pady=10)
 
-        self.btn_limpiar = ctk.CTkButton(self.frame_filtros, text="Limpiar Filtros", width=100, command=self.limpiar_filtros)
+        self.btn_limpiar = ctk.CTkButton(
+            self.frame_filtros, text="Limpiar Filtros", width=110, command=self.limpiar_filtros
+        )
         self.btn_limpiar.pack(side="right", padx=10, pady=10)
 
-        self.btn_exportar = ctk.CTkButton(self.frame_filtros, text="Exportar PDF", width=100, command=self.exportar_vista_pdf)
+        self.btn_exportar = ctk.CTkButton(
+            self.frame_filtros, text="Exportar PDF", width=110, command=self.exportar_vista_pdf
+        )
         self.btn_exportar.pack(side="right", padx=5, pady=10)
 
         # Panel Central: KPIs Tarjetas
@@ -63,36 +70,59 @@ class DashboardView(ctk.CTkFrame):
         self.frame_graficos = ctk.CTkFrame(self)
         self.frame_graficos.pack(fill="both", expand=True, padx=10, pady=5)
 
-        self.mostrar_graficos_empleo()
+        # Carga inicial de KPIs y Gráfico desde SQL Server
         self.aplicar_filtros_busqueda()
 
-    def mostrar_graficos_empleo(self) -> None:
-        """Incrusta un gráfico de sectores (pie chart) usando Matplotlib."""
-        fig, ax = plt.subplots(figsize=(5, 3.2), dpi=90)
+    def mostrar_graficos_empleo(self, distribucion: dict) -> None:
+        """Renderiza o actualiza dinámicamente el gráfico de sectores con los datos de SQL Server."""
+        if self.canvas_grafico is not None:
+            self.canvas_grafico.get_tk_widget().destroy()
+            self.canvas_grafico = None
+        if self.fig_actual is not None:
+            plt.close(self.fig_actual)
+
+        fig, ax = plt.subplots(figsize=(5.5, 3.4), dpi=90)
+        self.fig_actual = fig
         fig.patch.set_facecolor('#2b2b2b')
         ax.set_facecolor('#2b2b2b')
 
-        labels = ['Empleado', 'Independiente', 'Buscando Trabajo']
-        valores = [65, 20, 15]
-        colores = ['#2fa572', '#1f538d', '#e74c3c']
+        titulo_carrera = self.filtro_carrera if self.filtro_carrera != "Todas" else "Todas las Carreras"
 
-        ax.pie(valores, labels=labels, autopct='%1.1f%%', colors=colores, textprops={'color': 'w'})
-        ax.set_title("Distribución de Condición Laboral", color="white", fontsize=11)
+        if not distribucion:
+            ax.text(
+                0.5, 0.5,
+                f"Sin registros históricos para:\n{titulo_carrera}\n\n(Suba el archivo de Histórico ETL)",
+                color="#cccccc", fontsize=11, ha="center", va="center"
+            )
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for spine in ax.spines.values():
+                spine.set_visible(False)
+        else:
+            labels = list(distribucion.keys())
+            valores = list(distribucion.values())
+            paleta = ['#2fa572', '#1f538d', '#e67e22', '#e74c3c', '#9b59b6']
+            colores = [paleta[i % len(paleta)] for i in range(len(labels))]
 
-        canvas = FigureCanvasTkAgg(fig, master=self.frame_graficos)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+            ax.pie(valores, labels=labels, autopct='%1.1f%%', colors=colores, textprops={'color': 'w'})
+            ax.set_title(f"Distribución Laboral — {titulo_carrera}", color="white", fontsize=11, pad=10)
+
+        self.canvas_grafico = FigureCanvasTkAgg(fig, master=self.frame_graficos)
+        self.canvas_grafico.draw()
+        self.canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
 
     def aplicar_filtros_busqueda(self) -> None:
-        """Actualiza los cálculos de los KPIs con base en las opciones seleccionadas."""
+        """Actualiza los KPIs y el gráfico con base en la carrera seleccionada."""
         self.filtro_carrera = self.cmb_carrera.get()
         filtros = {"carrera": self.filtro_carrera}
 
         tasa = self.service.calcular_tasa_empleo(filtros)
         salario = self.service.obtener_prom_salarial(filtros)
+        distribucion = self.service.obtener_distribucion_condicion(filtros)
 
-        self.lbl_kpi_empleo_val.configure(text=f"{tasa}%")
+        self.lbl_kpi_empleo_val.configure(text=f"{tasa:.2f}%")
         self.lbl_kpi_salario_val.configure(text=f"S/. {salario:,.2f}")
+        self.mostrar_graficos_empleo(distribucion)
 
     def seleccionar_egresado(self) -> None:
         """Obtiene el detalle particular de un egresado seleccionado."""

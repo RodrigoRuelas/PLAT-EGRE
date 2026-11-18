@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 import pyodbc
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -47,29 +48,11 @@ class DatabaseConfig:
 
     @classmethod
     def get_sqlalchemy_engine(cls) -> Engine:
-        """Retorna un motor de SQLAlchemy configurado para pandas y cargas masivas."""
+        """Retorna un motor de SQLAlchemy configurado mediante odbc_connect."""
         try:
-            if cls.TRUSTED_CONNECTION.lower() == "yes":
-                connection_url = (
-                    f"mssql+pyodbc://@{cls.SERVER}/{cls.DATABASE}"
-                    f"?driver={cls.DRIVER.replace(' ', '+')}&trusted_connection=yes"
-                )
-            else:
-                connection_url = (
-                    f"mssql+pyodbc://{cls.USERNAME}:{cls.PASSWORD}@{cls.SERVER}/{cls.DATABASE}"
-                    f"?driver={cls.DRIVER.replace(' ', '+')}"
-                )
-            
+            odbc_str = urllib.parse.quote_plus(cls.get_connection_string())
+            connection_url = f"mssql+pyodbc:///?odbc_connect={odbc_str}"
             engine = create_engine(connection_url, fast_executemany=True)
             return engine
         except Exception as e:
             raise ConnectionError(f"Error al crear motor SQLAlchemy: {e}")
-
-
-if __name__ == "__main__":
-    try:
-        conn = DatabaseConfig.get_pyodbc_connection()
-        print("✅ Conexión exitosa a SQL Server con pyodbc.")
-        conn.close()
-    except Exception as err:
-        print(f"❌ Error de conexión: {err}")
